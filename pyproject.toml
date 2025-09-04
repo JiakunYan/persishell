@@ -1,0 +1,13 @@
+[project]
+name = "persishell"
+version = "0.1.0"
+description = "A simple wrapper around subprocess with persistent environment variables"
+readme = "README.md"
+requires-python = ">=3.7"
+license = { file = "LICENSE" }
+authors = [{ name = "Jiakun Yan", email = "jiakunyan1998@gmail.com" }]
+dependencies = []
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
