@@ -1,0 +1,4 @@
+__pycache__/
+persishell.egg-info/
+.pytest_cache/
+.vscode/
