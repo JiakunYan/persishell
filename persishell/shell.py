@@ -38,9 +38,14 @@ class ThreadReadio(threading.Thread):
                     if match:
                         self.returncode = int(match.group(1))
                         buffer = self.terminator_pattern.sub("", buffer)
-                        break
+                        if len(chunk) < len(match.group(0)):
+                            chunk = ""
+                        else:
+                            chunk = self.terminator_pattern.sub("", chunk)
                     if self.outfile:
                         print(chunk, file=self.outfile, end='', flush=True)
+                    if match:
+                        break;
             except AttributeError:
                 pass
             time.sleep(0.5)
