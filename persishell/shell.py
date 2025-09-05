@@ -1,6 +1,7 @@
 import re
-from subprocess import Popen, PIPE
-import os, sys
+import subprocess
+import os
+import sys
 import threading
 import random
 import fcntl
@@ -40,7 +41,7 @@ class ThreadReadio(threading.Thread):
                         break
                     if self.outfile:
                         print(chunk, file=self.outfile, end='', flush=True)
-            except Exception:
+            except AttributeError:
                 pass
             time.sleep(0.5)
         self.ret = buffer
@@ -55,7 +56,23 @@ class PersiShell:
             self.stderr = stderr
 
     def __init__(self):
-        self.proc = Popen(['bash'], stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=False)
+        # We do not use 'with' here because the shell process is meant to
+        # persist for the lifetime of this object.
+        self.proc = subprocess.Popen(['bash'], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE, close_fds=False)
+
+    def close(self):
+        """Terminate the persistent shell process and clean up resources."""
+        if self.proc and self.proc.poll() is None:
+            self.proc.terminate()
+            try:
+                self.proc.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                self.proc.kill()
+                self.proc.wait()
+
+    def __del__(self):
+        self.close()
 
     # Run a command in the persistent shell
     def run(self, command, print_command=True, print_output=True, timeout=None):
@@ -77,8 +94,10 @@ class PersiShell:
         self.proc.stdin.write(cmd.encode('UTF-8'))
         self.proc.stdin.flush()
 
-        t1 = ThreadReadio(self.proc, self.proc.stdout, sys.stdout if print_output else None, secret, command)
-        t2 = ThreadReadio(self.proc, self.proc.stderr, sys.stderr if print_output else None, secret, command)
+        t1 = ThreadReadio(self.proc, self.proc.stdout, sys.stdout if print_output else None,
+                          secret, command)
+        t2 = ThreadReadio(self.proc, self.proc.stderr, sys.stderr if print_output else None,
+                          secret, command)
 
         t1.start()
         t2.start()
@@ -90,19 +109,20 @@ class PersiShell:
                 print("PersiShell.run: killing process")
                 self.proc.kill()
                 self.proc.wait()
-                raise Exception("Timeout")
+                raise TimeoutError("Timeout")
         else:
             t1.join()
             t2.join()
-        
+
         returncode = t1.returncode if t1.returncode is not None else t2.returncode or -1
         return self.CompletedProcess(command, returncode, t1.ret, t2.ret)
-    
+
     # Convenience functions
     def export(self, key, val):
-        ret = self.run("export {}={}".format(key, val))
+        ret = self.run(f"export {key}={val}")
         return ret.returncode
 
     def unset(self, key):
-        ret = self.run("unset {}".format(key))
+        ret = self.run(f"unset {key}")
         return ret.returncode
+    

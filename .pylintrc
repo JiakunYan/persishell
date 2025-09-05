@@ -1,0 +1,46 @@
+[MASTER]
+ignore=.venv,venv,build,dist
+jobs=1
+load-plugins=
+extension-pkg-whitelist=
+persistent=yes
+
+[MESSAGES CONTROL]
+# Disable specific messages
+disable=
+    C0114,  # missing-module-docstring
+    C0115,  # missing-class-docstring
+    C0116,  # missing-function-docstring
+    R0903,  # too-few-public-methods
+    R0913,  # too-many-arguments
+    R0801,  # duplicate-code
+    W1203,  # use f-string instead of format (optional)
+
+[REPORTS]
+output-format=colorized
+reports=no
+score=yes
+fail-under=9.0  # Optional: fail CI if score < 9.0
+
+[FORMAT]
+max-line-length=100
+indent-string='    '
+expected-line-ending-format=LF
+
+[DESIGN]
+max-args=5
+max-locals=15
+max-branches=12
+max-statements=50
+max-parents=7
+max-attributes=10
+max-public-methods=20
+min-public-methods=0
+
+[TYPECHECK]
+ignored-modules=
+ignored-classes=
+
+[IMPORTS]
+known-standard-library=typing,os,sys,subprocess,threading
+known-third-party=pytest
